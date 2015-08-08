@@ -10,11 +10,14 @@
 		<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
 	<![endif]-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
-    <script type="text/javascript" src="d3-ForceEdgeBundling.js"></script>
-    <script type="text/javascript" src='sankey.js'></script>
 </head>
 <body>
 	<div class='title'>Visualizing a Worm's Nervous System <br/> <i>C. Elegans</i></div>
+    <div class='legend'>
+        <div class='color H'></div>Head
+        <div class='color M'></div>Body
+        <div class='color T'></div>Tail
+    </div>
     <div class='elegans'>
         <div class='neuron'></div>
         <div class='over'></div>
@@ -39,8 +42,8 @@
         
         // Graph size and margins
         var margin  = 30;
-        var width   = parseInt(d3.select(".graph").style("width")) - margin*2,
-            height  = parseInt(d3.select(".graph").style("height")) - margin*2,
+        var width   = parseInt(d3.select(".graph").style("width" )) - margin * 2,
+            height  = parseInt(d3.select(".graph").style("height")) - margin * 2,
             padding = 6, // separation between nodes
             maxRadius = 8;
 
@@ -55,7 +58,7 @@
             .attr("height", height);
         
         function collide(node) {
-            var r = node.radius + 16,
+            var r = node.radius + 18,
             nx1 = node.x - r,
             nx2 = node.x + r,
             ny1 = node.y - r,
@@ -65,7 +68,7 @@
                     var x = node.x - quad.point.x,
                     y = node.y - quad.point.y,
                     l = Math.sqrt(x * x + y * y),
-                    r = node.radius + quad.point.radius;
+                    r = node.radius + quad.point.radius + 2;
                     if (l < r) {
                         l = (l - r) / l * .5;
                         node.x -= x *= l;
@@ -79,25 +82,26 @@
         }
         
         // load the data
-        d3.json("data/celegans.json", function(error, graph) {
+        d3.json("data/elegans.json", function(error, graph) {
             if (error) throw error;
             
             var force = d3.layout.force()
                 .nodes(graph.nodes)
-                .charge(-30)
-                .linkDistance(30)
                 .size([width, height])
                 .start();
 
-            var link = svg.selectAll(".link")
-                .data(graph.links)
-                .enter().append("line")
-                .attr("class", "link");
-            
             var node = svg.selectAll(".node")
                 .data(graph.nodes)
                 .enter().append("circle")
                 .attr("class", function(d) { return d.region; })
+                .attr("cx", function(d){
+                    switch(d.region){
+                        case 'H' : return x(0);
+                        case 'M' : return x(1);
+                        case 'T' : return x(2);
+                    };
+                })
+                .attr("cy", height/2)
                 .attr("r", function(d) { 
                     d.radius = 4 + d.synapses/20;
                     return d.radius; })
@@ -112,8 +116,9 @@
                         .attr("cy", parseInt(0.5*mapH))
                         .attr("r", 4 + d.synapses/25);
                     $('.neuron').html(d.neuron);
+                    
                 }).on("mouseout", function(d){
-                    d3.select(this).style("opacity",0.5)
+                    d3.select(this).style("opacity",0.5);
                     drawMap.selectAll("circle")
                         .transition()
                         .style("opacity",0)
@@ -128,11 +133,25 @@
                 var q = d3.geom.quadtree(graph.nodes),
                     i = 0,
                     n = graph.nodes.length;
-
+                
+                var k = .1 * e.alpha;
+                
+                graph.nodes.forEach(function(o, i) {
+                    var dx;
+                    switch(o.region){
+                        case 'H' : dx = x(0); break;
+                        case 'M' : dx = x(1); break;
+                        case 'T' : dx = x(2); break;
+                    };
+                    o.y += (height/2 - o.y) * k;
+                    o.x += (dx - o.x) * k;
+                });
+                
                 while (++i < n) q.visit(collide(graph.nodes[i]));
-
+                
                 node.attr("cx", function(d) { return d.x; })
                     .attr("cy", function(d) { return d.y; });
+           
             });
         });
     </script>
