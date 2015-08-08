@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset=utf-8 />
+	<title></title>
+	<link rel="stylesheet" type="text/css" media="screen" href="css/master.css" />
+    <link href='http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz' rel='stylesheet' type='text/css'>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+	<!--[if IE]>
+		<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="d3-ForceEdgeBundling.js"></script>
+    <script type="text/javascript" src='sankey.js'></script>
+</head>
+<body>
+	<div class='title'>Visualizing a Worm's Nervous System <br/> <i>C. Elegans</i></div>
+    <div class='elegans'>
+        <div class='neuron'></div>
+        <div class='over'></div>
+    </div>
+    <div class='graph'></div>
+    <div class='citation'>
+        <b>Data taken from:</b><br/>
+        Oshio, K., Iwasaki, Y., Morita, S., Osana, Y., Gomi, S., Akiyama, E.,<br/>
+        Omata, K., Oka, K. and Kawamura, K. (2003).<br/>
+        "Database of Synaptic Connectivity of C. elegans for Computation",<br/>
+        Technical Report of CCeP, Keio Future, No.3, Keio University.
+    </div>
+    <script type="application/javascript">
+        // C. Elegans map
+        mapW = 600, mapH = 130;
+        map = d3.select(".elegans")
+            .append("svg")
+                .attr("width", mapW)
+                .attr("height", mapH);
+        drawMap = map.append("g")
+            .attr("transform", "translate(0,0)");
+        
+        // Graph size and margins
+        var margin  = 30;
+        var width   = parseInt(d3.select(".graph").style("width")) - margin*2,
+            height  = parseInt(d3.select(".graph").style("height")) - margin*2,
+            padding = 6, // separation between nodes
+            maxRadius = 8;
+
+        var regions = 3;
+        
+        var x = d3.scale.ordinal()
+            .domain(d3.range(regions))
+            .rangePoints([0, width], 1);
+
+        var svg = d3.select(".graph").append("svg")
+            .attr("width", width)
+            .attr("height", height);
+        
+        function collide(node) {
+            var r = node.radius + 16,
+            nx1 = node.x - r,
+            nx2 = node.x + r,
+            ny1 = node.y - r,
+            ny2 = node.y + r;
+            return function(quad, x1, y1, x2, y2) {
+                if (quad.point && (quad.point !== node)) {
+                    var x = node.x - quad.point.x,
+                    y = node.y - quad.point.y,
+                    l = Math.sqrt(x * x + y * y),
+                    r = node.radius + quad.point.radius;
+                    if (l < r) {
+                        l = (l - r) / l * .5;
+                        node.x -= x *= l;
+                        node.y -= y *= l;
+                        quad.point.x += x;
+                        quad.point.y += y;
+                    }
+                }
+                return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+            };
+        }
+        
+        // load the data
+        d3.json("data/celegans.json", function(error, graph) {
+            if (error) throw error;
+            
+            var force = d3.layout.force()
+                .nodes(graph.nodes)
+                .charge(-30)
+                .linkDistance(30)
+                .size([width, height])
+                .start();
+
+            var link = svg.selectAll(".link")
+                .data(graph.links)
+                .enter().append("line")
+                .attr("class", "link");
+            
+            var node = svg.selectAll(".node")
+                .data(graph.nodes)
+                .enter().append("circle")
+                .attr("class", function(d) { return d.region; })
+                .attr("r", function(d) { 
+                    d.radius = 4 + d.synapses/20;
+                    return d.radius; })
+                .style("opacity",0.5)
+                .call(force.drag)
+                .on("mouseover", function(d){
+                    var neuron = d.neuron;
+                    d3.select(this).style("opacity",1)
+                    drawMap.append("circle")
+                        .attr("class", d.region)
+                        .attr("cx", parseFloat(d.position*mapW))
+                        .attr("cy", parseInt(0.5*mapH))
+                        .attr("r", 4 + d.synapses/25);
+                    $('.neuron').html(d.neuron);
+                }).on("mouseout", function(d){
+                    d3.select(this).style("opacity",0.5)
+                    drawMap.selectAll("circle")
+                        .transition()
+                        .style("opacity",0)
+                        .remove();
+                    $('.neuron').html('');
+                });
+
+            node.append("title")
+                .text(function(d) { return d.neuron; });
+            
+            force.on("tick", function(e) {
+                var q = d3.geom.quadtree(graph.nodes),
+                    i = 0,
+                    n = graph.nodes.length;
+
+                while (++i < n) q.visit(collide(graph.nodes[i]));
+
+                node.attr("cx", function(d) { return d.x; })
+                    .attr("cy", function(d) { return d.y; });
+            });
+        });
+    </script>
+</body>
+</html>
