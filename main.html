@@ -17,15 +17,20 @@
         <div class='celegans'></div>
     </div>
     <div class='legend'>
-        <b>Neuron Region</b><br/>
+        <b>Neuronal Regions</b><br/>
         <div class='color H'></div> Head<br/>
         <div class='color M'></div> Body<br/>
         <div class='color T'></div> Tail<br/><br/>
-        Each circle represents a neuron. It's size is representative of the neuron's number of synapses.<br/><br/>
+        Each circle represents a neuron. It's size is representative of the neuron's number of synapses.<br/>
+        Each grey line represents the number of total connections from one region to another through their thickness.<br/><br/>
         Placing the cursor over one of them reveals the neuron's name and position in the body of the C. Elegans,
         shown in the diagram below.<br/><br/>
-        Note: There are body neurons in the head region and head neurons in the body region, this is because their 
-        functions make them members of that region. 
+        
+        A short inspection of the graph shows us two important pieces of information:<br/>
+        1. the head contains most of the neurons, and is home for the most complex of them. <br/>
+        2. there are two main neural pathways: <br/>
+        <t/>a. from head to body, presumably to control movement.<br/>
+        <t/>b. from tail to head, to give feedback during the sexual processes.
     </div>
     <div class='elegans'>
         <div class='neuron'></div>
@@ -69,33 +74,15 @@
             .attr("width", width)
             .attr("height", height);
         
-        /*svg.append("line")
-            .attr("class", "pointer")
-            .attr("x1", x(0)+310)
-            .attr("x2", x(1)-50)
-            .attr("y1", height/2 - 40)
-            .attr("y2", height/2 - 40);
-        
-         svg.append("line")
-            .attr("class", "pointer")
-            .attr("x1", x(0)+310)
-            .attr("x2", x(1)-50)
-            .attr("y1", height/2 + 40)
-            .attr("y2", height/2 + 40);
-        
-        svg.append("line")
-            .attr("class", "pointer")
-            .attr("x1", x(1)+150)
-            .attr("x2", x(2)-200)
-            .attr("y1", height/2 - 40)
-            .attr("y2", height/2 - 40);
-        
-         svg.append("line")
-            .attr("class", "pointer")
-            .attr("x1", x(1)+150)
-            .attr("x2", x(2)-200)
-            .attr("y1", height/2 + 40)
-            .attr("y2", height/2 + 40);*/
+        function neurinfo(d){
+            return '<b>' + d.neuron + '</b> Neuron connections [to, from]:' + 
+            '    HEAD [' + d.sh +
+            ', ' + d.rh +
+            ']    BODY [' + d.sm +
+            ', ' + d.rm +
+            ']    TAIL [' + d.st +
+            ', ' + d.rt +']';
+        }
         
         function collide(node) {
             var r = node.radius + 18,
@@ -149,6 +136,36 @@
                 }
             });
             
+            function makechord(d, xs, ys, xe, ye){
+                return svg.append("path")
+                    .attr("d", "M" + (xs) + "," + (ys + d/2)
+                        + "L" + (xs) + "," + (ys - d/2)
+                        + "L" + (xe) + "," + (ye - d/4)
+                        + "L" + (xe) + "," + (ye + d/4)
+                        + "C")
+                    .style("fill", '#888');
+            }
+            
+            LHtM = makechord(HtM/10, x(0)+310, height/2 - 40, x(1)-50, height/2 - 40);
+            LMtJ = makechord(MtH/10, x(1)-50, height/2 + 40, x(0)+310, height/2 + 40);
+            LMtT = makechord(MtT/10, x(1)+150, height/2 - 40, x(2)-200, height/2 - 40);
+            LTtM = makechord(TtM/10, x(2)-200, height/2 + 40, x(1)+150, height/2 + 40)
+            
+            function makecurve(d, xs,ys, xm,ym, xe,ye){
+                var delta = (xs < xe) ? 20 : -20 ; 
+                return svg.append("path")
+                    .attr("d", "M" + (xs) + "," + (ys - d/2)
+                        + "L" + (xs) + "," + (ys - d/2)
+                        + "S" + (xm) + "," + (ym - d/3) + " " + (xe) + "," + (ye)
+                        + "L" + (xe) + "," + (ye)
+                        + "S" + (xm+delta) + "," + (ym + d/3) + " " + (xs) + "," + (ys + d/2) + "C"
+                    )
+                    .style("fill", '#888');
+            }
+            
+            LHtT = makecurve(HtT/10, (x(0)+310),(height/2 - 120) , x(1),(height/2 - 300), (x(2)-200), (height/2 - 80))
+            LTtH = makecurve(TtH/10, (x(2)-200),(height/2 + 80) , x(1),(height/2 + 300), (x(0)+310), (height/2 + 80))
+            
             var force = d3.layout.force()
                 .nodes(graph.nodes)
                 .gravity(0.1)
@@ -180,21 +197,10 @@
                         .attr("cx", parseFloat(d.position*mapW))
                         .attr("cy", parseInt(0.5*mapH))
                         .attr("r", 4 + d.synapses/25);
-                    
-                    $('.neuron').html('<b>' + d.neuron + '</b> Neuron connections [to, from]:' + 
-                                      '    HEAD [' + d.sh +
-                                      ', ' + d.rh +
-                                      ']    BODY [' + d.sm +
-                                      ', ' + d.rm +
-                                      ']    TAIL [' + d.st +
-                                      ', ' + d.rt +']');
-                    
-                    svg.append("line")
-                        .attr("class", d.region)
-                        .attr("x1", d.x)
-                        .attr("y1", d.y)
-                        .attr("x2", x(1))
-                        .attr("y2", d.y);
+                    LHtM.remove();
+                    LHtM = makechord(d.sm/10, x(0)+310, height/2 - 40, x(1)-50, height/2 - 40);
+
+                    $('.neuron').html(neurinfo(d));
                 }).on("mouseout", function(d){
                     d3.select(this).style("opacity",0.5);
                     drawMap.selectAll("circle")
@@ -202,6 +208,9 @@
                         .style("opacity",0)
                         .remove();
                     $('.neuron').html('');
+                    
+                    LHtM.remove();
+                    LHtM = makechord(HtM/10, x(0)+310, height/2 - 40, x(1)-50, height/2 - 40);
                 });
 
             node.append("title")

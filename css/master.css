@@ -76,6 +76,9 @@ title.i {
     color:#098;
     vertical-align: top;
 }
+.title > a:hover{
+    color:#3ba;
+}
 
 .neuron {
     position:absolute;
@@ -136,4 +139,5 @@ title.i {
     vertical-align: bottom;
     margin-left: 20px;
     cursor: pointer;
+    box-shadow: 0 0 4px 1px #333;
 }
