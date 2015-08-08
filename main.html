@@ -12,11 +12,20 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
 </head>
 <body>
-	<div class='title'>Visualizing a Worm's Nervous System <br/> <i>C. Elegans</i></div>
+	<div class='title'>Visualizing a Worm's Nervous System <br/> 
+        <a id='wiki' href="https://en.wikipedia.org/wiki/Caenorhabditis_elegans" target='_blank'>C. Elegans </a>
+        <div class='celegans'></div>
+    </div>
     <div class='legend'>
-        <div class='color H'></div>Head
-        <div class='color M'></div>Body
-        <div class='color T'></div>Tail
+        <b>Neuron Region</b><br/>
+        <div class='color H'></div> Head<br/>
+        <div class='color M'></div> Body<br/>
+        <div class='color T'></div> Tail<br/><br/>
+        Each circle represents a neuron. It's size is representative of the neuron's number of synapses.<br/><br/>
+        Placing the cursor over one of them reveals the neuron's name and position in the body of the C. Elegans,
+        shown in the diagram below.<br/><br/>
+        Note: There are body neurons in the head region and head neurons in the body region, this is because their 
+        functions make them members of that region. 
     </div>
     <div class='elegans'>
         <div class='neuron'></div>
@@ -31,6 +40,9 @@
         Technical Report of CCeP, Keio Future, No.3, Keio University.
     </div>
     <script type="application/javascript">
+        $('.celegans').on('click', function(){
+            $('#wiki').click();
+        })
         // C. Elegans map
         mapW = 600, mapH = 130;
         map = d3.select(".elegans")
@@ -56,6 +68,34 @@
         var svg = d3.select(".graph").append("svg")
             .attr("width", width)
             .attr("height", height);
+        
+        /*svg.append("line")
+            .attr("class", "pointer")
+            .attr("x1", x(0)+310)
+            .attr("x2", x(1)-50)
+            .attr("y1", height/2 - 40)
+            .attr("y2", height/2 - 40);
+        
+         svg.append("line")
+            .attr("class", "pointer")
+            .attr("x1", x(0)+310)
+            .attr("x2", x(1)-50)
+            .attr("y1", height/2 + 40)
+            .attr("y2", height/2 + 40);
+        
+        svg.append("line")
+            .attr("class", "pointer")
+            .attr("x1", x(1)+150)
+            .attr("x2", x(2)-200)
+            .attr("y1", height/2 - 40)
+            .attr("y2", height/2 - 40);
+        
+         svg.append("line")
+            .attr("class", "pointer")
+            .attr("x1", x(1)+150)
+            .attr("x2", x(2)-200)
+            .attr("y1", height/2 + 40)
+            .attr("y2", height/2 + 40);*/
         
         function collide(node) {
             var r = node.radius + 18,
@@ -85,8 +125,33 @@
         d3.json("data/elegans.json", function(error, graph) {
             if (error) throw error;
             
+            var HtM = 0, HtT = 0, MtH = 0, 
+                MtT = 0, TtM = 0, TtH = 0, 
+                HtH = 0, MtM = 0, TtT = 0;
+            
+            graph.nodes.forEach(function(d){
+                switch(d.region){
+                    case 'H' :
+                        HtH += d.sh;
+                        HtM += d.sm;
+                        HtT += d.st;
+                        break;
+                    case 'M' :
+                        MtH += d.sh;
+                        MtM += d.sm;
+                        MtT += d.st;
+                        break;
+                    case 'T' :
+                        TtH += d.sh;
+                        TtM += d.sm;
+                        TtT += d.st;
+                        break;
+                }
+            });
+            
             var force = d3.layout.force()
                 .nodes(graph.nodes)
+                .gravity(0.1)
                 .size([width, height])
                 .start();
 
@@ -115,8 +180,21 @@
                         .attr("cx", parseFloat(d.position*mapW))
                         .attr("cy", parseInt(0.5*mapH))
                         .attr("r", 4 + d.synapses/25);
-                    $('.neuron').html(d.neuron);
                     
+                    $('.neuron').html('<b>' + d.neuron + '</b> Neuron connections [to, from]:' + 
+                                      '    HEAD [' + d.sh +
+                                      ', ' + d.rh +
+                                      ']    BODY [' + d.sm +
+                                      ', ' + d.rm +
+                                      ']    TAIL [' + d.st +
+                                      ', ' + d.rt +']');
+                    
+                    svg.append("line")
+                        .attr("class", d.region)
+                        .attr("x1", d.x)
+                        .attr("y1", d.y)
+                        .attr("x2", x(1))
+                        .attr("y2", d.y);
                 }).on("mouseout", function(d){
                     d3.select(this).style("opacity",0.5);
                     drawMap.selectAll("circle")
