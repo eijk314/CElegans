@@ -58,6 +58,7 @@ title.i {
     bottom:0;
     right:0;
     padding:10px;
+    width:342px;
 }
 
 .elegans {
@@ -72,7 +73,6 @@ title.i {
 .title > a {
     font-weight: lighter;
     text-decoration: none;
-    font-style: italic;
     color:#098;
     vertical-align: top;
 }
@@ -111,11 +111,13 @@ title.i {
 }
 
 .legend {
+
+    
     position:fixed;
-    top:15%;
+    top:25%;
     opacity: 0.85;
     left:0;
-    padding:10px;
+    padding:20px;
     z-index: 99;
     line-height: 1.2em;
     text-align: justify;
@@ -130,14 +132,27 @@ title.i {
 
 .celegans {
     background-image: url('../img/celegans.jpg');
-    background-size: 2.5em 2.5em;
+    background-size: 3em 3em;
     background-position: center;
-    width: 2.5em;
-    height: 2.5em;
-    border-radius: 2.5em;
+    width: 3em;
+    height: 3em;
+    border-radius: 3em;
     display: inline-block;
     vertical-align: bottom;
-    margin-left: 20px;
+    margin: 20px 60px;
     cursor: pointer;
-    box-shadow: 0 0 4px 1px #333;
+    box-shadow: 0 0 4px 2px #333;
+}
+
+.explanation {
+        position:fixed;
+    top:0;
+    opacity: 0.85;
+    right:0;
+    padding:20px;
+    z-index: 99;
+    line-height: 1.2em;
+    text-align: justify;
+    text-justify: inter-word;
+    width:342px;
 }

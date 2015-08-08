@@ -12,8 +12,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
 </head>
 <body>
-	<div class='title'>Visualizing a Worm's Nervous System <br/> 
-        <a id='wiki' href="https://en.wikipedia.org/wiki/Caenorhabditis_elegans" target='_blank'>C. Elegans </a>
+	<div class='title'>
+        <a id='wiki' href="https://en.wikipedia.org/wiki/Caenorhabditis_elegans" target='_blank'>C. Elegans </a> Nervous System <br/> 
         <div class='celegans'></div>
     </div>
     <div class='legend'>
@@ -24,8 +24,9 @@
         Each circle represents a neuron. It's size is representative of the neuron's number of synapses.<br/>
         Each grey line represents the number of total connections from one region to another through their thickness.<br/><br/>
         Placing the cursor over one of them reveals the neuron's name and position in the body of the C. Elegans,
-        shown in the diagram below.<br/><br/>
-        
+        shown in the diagram below.<br/><br/>  
+    </div>
+    <div class='explanation'>
         A short inspection of the graph shows us two important pieces of information:<br/>
         1. the head contains most of the neurons, and is home for the most complex of them. <br/>
         2. there are two main neural pathways: <br/>
@@ -58,7 +59,7 @@
             .attr("transform", "translate(0,0)");
         
         // Graph size and margins
-        var margin  = 30;
+        var margin  = 50;
         var width   = parseInt(d3.select(".graph").style("width" )) - margin * 2,
             height  = parseInt(d3.select(".graph").style("height")) - margin * 2,
             padding = 6, // separation between nodes
@@ -113,25 +114,21 @@
             if (error) throw error;
             
             var HtM = 0, HtT = 0, MtH = 0, 
-                MtT = 0, TtM = 0, TtH = 0, 
-                HtH = 0, MtM = 0, TtT = 0;
+                MtT = 0, TtM = 0, TtH = 0;
             
             graph.nodes.forEach(function(d){
                 switch(d.region){
                     case 'H' :
-                        HtH += d.sh;
                         HtM += d.sm;
                         HtT += d.st;
                         break;
                     case 'M' :
                         MtH += d.sh;
-                        MtM += d.sm;
                         MtT += d.st;
                         break;
                     case 'T' :
                         TtH += d.sh;
                         TtM += d.sm;
-                        TtT += d.st;
                         break;
                 }
             });
@@ -147,24 +144,25 @@
             }
             
             LHtM = makechord(HtM/10, x(0)+310, height/2 - 40, x(1)-50, height/2 - 40);
-            LMtJ = makechord(MtH/10, x(1)-50, height/2 + 40, x(0)+310, height/2 + 40);
+            LMtH = makechord(MtH/10, x(1)-50, height/2 + 40, x(0)+310, height/2 + 40);
             LMtT = makechord(MtT/10, x(1)+150, height/2 - 40, x(2)-200, height/2 - 40);
-            LTtM = makechord(TtM/10, x(2)-200, height/2 + 40, x(1)+150, height/2 + 40)
+            LTtM = makechord(TtM/10, x(2)-200, height/2 + 40, x(1)+150, height/2 + 40);
             
             function makecurve(d, xs,ys, xm,ym, xe,ye){
+                if(d>0) d = d + 4;
                 var delta = (xs < xe) ? 20 : -20 ; 
                 return svg.append("path")
                     .attr("d", "M" + (xs) + "," + (ys - d/2)
                         + "L" + (xs) + "," + (ys - d/2)
                         + "S" + (xm) + "," + (ym - d/3) + " " + (xe) + "," + (ye)
                         + "L" + (xe) + "," + (ye)
-                        + "S" + (xm+delta) + "," + (ym + d/3) + " " + (xs) + "," + (ys + d/2) + "C"
+                        + "S" + (xm+delta) + "," + (ym + d/3) + " " + (xs) + "," + (ys + d/2)
                     )
                     .style("fill", '#888');
             }
             
-            LHtT = makecurve(HtT/10, (x(0)+310),(height/2 - 120) , x(1),(height/2 - 300), (x(2)-200), (height/2 - 80))
-            LTtH = makecurve(TtH/10, (x(2)-200),(height/2 + 80) , x(1),(height/2 + 300), (x(0)+310), (height/2 + 80))
+            LHtT = makecurve(HtT/10, (x(0)+310),(height/2 - 120) , x(1),(height/2 - 300), (x(2)-200), (height/2 - 80));
+            LTtH = makecurve(TtH/10, (x(2)-200),(height/2 + 80) , x(1),(height/2 + 300), (x(0)+310), (height/2 + 80));
             
             var force = d3.layout.force()
                 .nodes(graph.nodes)
@@ -197,9 +195,35 @@
                         .attr("cx", parseFloat(d.position*mapW))
                         .attr("cy", parseInt(0.5*mapH))
                         .attr("r", 4 + d.synapses/25);
+                    
                     LHtM.remove();
-                    LHtM = makechord(d.sm/10, x(0)+310, height/2 - 40, x(1)-50, height/2 - 40);
-
+                    LHtT.remove();
+                    LMtH.remove();
+                    LMtT.remove();
+                    LTtM.remove();
+                    LTtH.remove();
+                    switch(d.region){
+                        case 'H':
+                            LHtM = makechord(d.sm/10, x(0)+310, height/2 - 40, x(1)-50, height/2 - 40);
+                            LHtT = makecurve(d.st/10, (x(0)+310),(height/2 - 120) , x(1),(height/2 - 300), (x(2)-200), (height/2 - 80));
+                            LMtH = makechord(d.rm/10, x(1)-50, height/2 + 40, x(0)+310, height/2 + 40);
+                            LTtH = makecurve(d.rt/10, (x(2)-200),(height/2 + 80) , x(1),(height/2 + 300), (x(0)+310), (height/2 + 80));
+                            break;
+                        case 'M':
+                            LHtM = makechord(d.rh/10, x(0)+310, height/2 - 40, x(1)-50, height/2 - 40);
+                            LMtH = makechord(d.sh/10, x(1)-50, height/2 + 40, x(0)+310, height/2 + 40);
+                            LMtT = makechord(d.st/10, x(1)+150, height/2 - 40, x(2)-200, height/2 - 40);
+                            LTtM = makechord(d.rt/10, x(2)-200, height/2 + 40, x(1)+150, height/2 + 40);
+                            break;
+                        case 'T':
+                            LMtT = makechord(d.rm/10, x(1)+150, height/2 - 40, x(2)-200, height/2 - 40);
+                            LTtM = makechord(d.sm/10, x(2)-200, height/2 + 40, x(1)+150, height/2 + 40);
+                            LHtT = makecurve(d.rh/10, (x(0)+310),(height/2 - 120) , x(1),(height/2 - 300), (x(2)-200), (height/2 - 80));
+                            LTtH = makecurve(d.sh/10, (x(2)-200),(height/2 + 80) , x(1),(height/2 + 300), (x(0)+310), (height/2 + 80));
+                            break;
+                    }
+                    
+                    
                     $('.neuron').html(neurinfo(d));
                 }).on("mouseout", function(d){
                     d3.select(this).style("opacity",0.5);
@@ -208,9 +232,18 @@
                         .style("opacity",0)
                         .remove();
                     $('.neuron').html('');
-                    
-                    LHtM.remove();
+                    LHtM.transition().style('opacity', 0).remove();
+                    LHtT.transition().style('opacity', 0).remove();
+                    LMtH.transition().style('opacity', 0).remove();
+                    LMtT.transition().style('opacity', 0).remove();
+                    LTtM.transition().style('opacity', 0).remove();
+                    LTtH.transition().style('opacity', 0).remove();
                     LHtM = makechord(HtM/10, x(0)+310, height/2 - 40, x(1)-50, height/2 - 40);
+                    LMtH = makechord(MtH/10, x(1)-50, height/2 + 40, x(0)+310, height/2 + 40);
+                    LMtT = makechord(MtT/10, x(1)+150, height/2 - 40, x(2)-200, height/2 - 40);
+                    LTtM = makechord(TtM/10, x(2)-200, height/2 + 40, x(1)+150, height/2 + 40);
+                    LHtT = makecurve(HtT/10, (x(0)+310),(height/2 - 120) , x(1),(height/2 - 300), (x(2)-200), (height/2 - 80));
+                    LTtH = makecurve(TtH/10, (x(2)-200),(height/2 + 80) , x(1),(height/2 + 300), (x(0)+310), (height/2 + 80));
                 });
 
             node.append("title")
