@@ -12,43 +12,56 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
 </head>
 <body>
-	<div class='title'>
-        <a id='wiki' href="https://en.wikipedia.org/wiki/Caenorhabditis_elegans" target='_blank'>C. Elegans </a> Nervous System <br/> 
-        <div class='celegans'></div>
+    <div class='container'>
+        <div class='title'>
+            <a id='wiki' href="https://en.wikipedia.org/wiki/Caenorhabditis_elegans" target='_blank'>C. Elegans </a> Nervous System <br/> 
+            <div class='celegans'></div>
+        </div>
+        <div class='legend'>
+            <b>Neuronal Regions</b><br/>
+            <div class='color H'></div> Head<br/>
+            <div class='color M'></div> Body<br/>
+            <div class='color T'></div> Tail<br/><br/>
+            Each circle represents a neuron. It's size is representative of the neuron's number of synapses.<br/><br/>
+            Neurons are clustered according to the region they are in (head, body or tail). <br/><br/>
+            Each grey line represents the number of total connections in the pathway from one region to another, enconded in their thickness. The direction is from the thicker side to the thinner one.<br/><br/>
+            Placing the cursor over one of them reveals the neuron's name and position in the body of the C. Elegans,
+            shown in the diagram below. Also, the pathways for that neuron are shown.<br/><br/>  
+        </div>
+        <div class='explanation'>
+            A short inspection of the graph shows two important pieces of information:<br/>
+            1. the head contains most of the neurons, and is home for the most complex of them. <br/>
+            2. there are two main neural pathways: <br/>
+            <t/>a. from head to body, presumably to control movement.<br/>
+            <t/>b. from tail to head, to give feedback during the sexual processes.
+        </div>
+        <div class='elegans'>
+            <div class='neuron'></div>
+            <div class='over'></div>
+        </div>
+        <div class='graph'></div>
+        <div class='citation'>
+            <b>Data taken from:</b><br/>
+            Oshio, K., Iwasaki, Y., Morita, S., Osana, Y., Gomi, S., Akiyama, E.,<br/>
+            Omata, K., Oka, K. and Kawamura, K. (2003).<br/>
+            "Database of Synaptic Connectivity of C. elegans for Computation",<br/>
+            Technical Report of CCeP, Keio Future, No.3, Keio University.
+        </div>
     </div>
-    <div class='legend'>
-        <b>Neuronal Regions</b><br/>
-        <div class='color H'></div> Head<br/>
-        <div class='color M'></div> Body<br/>
-        <div class='color T'></div> Tail<br/><br/>
-        Each circle represents a neuron. It's size is representative of the neuron's number of synapses.<br/>
-        Each grey line represents the number of total connections from one region to another through their thickness.<br/><br/>
-        Placing the cursor over one of them reveals the neuron's name and position in the body of the C. Elegans,
-        shown in the diagram below.<br/><br/>  
-    </div>
-    <div class='explanation'>
-        A short inspection of the graph shows us two important pieces of information:<br/>
-        1. the head contains most of the neurons, and is home for the most complex of them. <br/>
-        2. there are two main neural pathways: <br/>
-        <t/>a. from head to body, presumably to control movement.<br/>
-        <t/>b. from tail to head, to give feedback during the sexual processes.
-    </div>
-    <div class='elegans'>
-        <div class='neuron'></div>
-        <div class='over'></div>
-    </div>
-    <div class='graph'></div>
-    <div class='citation'>
-        <b>Data taken from:</b><br/>
-        Oshio, K., Iwasaki, Y., Morita, S., Osana, Y., Gomi, S., Akiyama, E.,<br/>
-        Omata, K., Oka, K. and Kawamura, K. (2003).<br/>
-        "Database of Synaptic Connectivity of C. elegans for Computation",<br/>
-        Technical Report of CCeP, Keio Future, No.3, Keio University.
-    </div>
+	
     <script type="application/javascript">
         $('.celegans').on('click', function(){
             $('#wiki').click();
         })
+        jQuery.fn.center = function () {
+            this.css("position","absolute");
+            this.css("top", Math.max(0, (($(window).height() - $(this).outerHeight()) / 2) + 
+                                                $(window).scrollTop()) + "px");
+            this.css("left", Math.max(0, (($(window).width() - $(this).outerWidth()) / 2) + 
+                                                $(window).scrollLeft()) + "px");
+            return this;
+        }
+        $('.container').center();
         // C. Elegans map
         mapW = 600, mapH = 130;
         map = d3.select(".elegans")
@@ -65,7 +78,13 @@
             padding = 6, // separation between nodes
             maxRadius = 8;
 
+        console.log($(window).height());   // returns height of browser viewport
+        console.log($(document).height()); // returns height of HTML document
+        console.log($(window).width());   // returns width of browser viewport
+        console.log($(document).width());
+        
         var regions = 3;
+        
         
         var x = d3.scale.ordinal()
             .domain(d3.range(regions))
@@ -134,12 +153,13 @@
             });
             
             function makechord(d, xs, ys, xe, ye){
+                if(d>0) d = Math.max(d, 1);
                 return svg.append("path")
                     .attr("d", "M" + (xs) + "," + (ys + d/2)
                         + "L" + (xs) + "," + (ys - d/2)
                         + "L" + (xe) + "," + (ye - d/4)
                         + "L" + (xe) + "," + (ye + d/4)
-                        + "C")
+                        )
                     .style("fill", '#888');
             }
             
@@ -149,6 +169,7 @@
             LTtM = makechord(TtM/10, x(2)-200, height/2 + 40, x(1)+150, height/2 + 40);
             
             function makecurve(d, xs,ys, xm,ym, xe,ye){
+                if(d>0) d = Math.max(d, 1);
                 if(d>0) d = d + 4;
                 var delta = (xs < xe) ? 20 : -20 ; 
                 return svg.append("path")

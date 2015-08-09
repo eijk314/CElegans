@@ -10,7 +10,7 @@ svg {
 }
 
 .title {
-    position:fixed;
+    position:absolute;
     max-height: 50px;
     height:15%;
     min-height: 30px;
@@ -23,7 +23,7 @@ svg {
 }
 
 .graph {
-    position: fixed;
+    position: absolute;
     top:0;
     left:0;
     width: 100%;
@@ -54,7 +54,7 @@ title.i {
 }
 
 .citation {
-    position: fixed;
+    position: absolute;
     bottom:0;
     right:0;
     padding:10px;
@@ -62,10 +62,10 @@ title.i {
 }
 
 .elegans {
+    position: absolute;
     max-width:660px;
     min-width:200px;
     z-index: 100;
-    position: fixed;
     bottom:0;
     margin-left:25%;
 }
@@ -111,9 +111,7 @@ title.i {
 }
 
 .legend {
-
-    
-    position:fixed;
+    position:absolute;
     top:25%;
     opacity: 0.85;
     left:0;
@@ -145,7 +143,7 @@ title.i {
 }
 
 .explanation {
-        position:fixed;
+    position:absolute;
     top:0;
     opacity: 0.85;
     right:0;
@@ -155,4 +153,12 @@ title.i {
     text-align: justify;
     text-justify: inter-word;
     width:342px;
+}
+
+.container {
+    position: fixed;
+    top:0;
+    left:0;
+    width:1366px;
+    height:667px;
 }
