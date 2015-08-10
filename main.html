@@ -31,11 +31,16 @@
              and the pathways for that neuron.<br/><br/>  
         </div>
         <div class='explanation'>
-            A short inspection of the graph shows two important pieces of information:<br/>
-            1. the head contains most of the neurons, and is home for the most complex of them. <br/>
-            2. there are two main neural pathways: <br/>
-            <t/>a. from head to body, presumably to control movement.<br/>
-            <t/>b. from tail to head, to give feedback during the sexual processes.
+            <b>The Data</b><br/><br/>
+            A subset of the data has been selected, leaving out intra-regional connections and connections to motor cells, being the main aim of 
+            the graph to study inter-regional communication.<br/><br/>
+            <b>The Conclusion</b><br/><br/>
+            A brief inspection of the graph shows the following:<br/>
+            1. The head has a higher neuron density, and also hosts the most complex of them. <br/>
+            2. there are three main neural pathways: <br/>
+            ---a. from head to body, presumably to control movement.<br/>
+            ---b. from tail to head, to give feedback during the sexual processes.<br/>
+            ---c. from body to head, to give sensorial feedback.
         </div>
         <div class='elegans'>
             <div class='neuron'></div>
@@ -63,8 +68,6 @@
                                                 $(window).scrollLeft()) + "px");
             return this;
         }
-        
-       
         
         $('.container').center();
         // C. Elegans map
@@ -352,8 +355,8 @@
             node.append("title")
                 .text(function(d) { return d.neuron; });
             
-            x1 = x(1);          y1 = (halfheight + 40);
-            x2 = (x(1)-80);     y2 = (halfheight - 40);
+            x1 = x(1);          y1 = (halfheight + 50);
+            x2 = (x(1)-80);     y2 = (halfheight - 50);
             x3 = (x(1)-100);    y3 = (halfheight - 180);
             x4 = (x(1)+100);    y4 = (halfheight + 180);
             x5 = (x(1)+200);    y5 = (halfheight - 170);
@@ -375,48 +378,51 @@
                     o.y += (halfheight - o.y) * k;
                     o.x += (dx - o.x) * k;
                 });
-                i = -MtH;
-                MHLink.attr("d", function(d){
-                    i+=MtH;
-                    return "M" + d.source.x + "," + d.source.y
-                    + "S" + x1 + "," + y1 + " " + x2 + "," + (y1 + i) 
-                    + "S" + x2 + "," + y1 + " " + d.target.x + "," + d.target.y;
-                });
-                i = -HtM;
-                HMLink.attr("d", function(d){
-                    i+=HtM;
-                    return "M" + d.source.x + "," + d.source.y
-                    + "S" + x3 + "," + y2 + " " + x3 + "," + (y2 + i) 
-                    + "S" + x1 + "," + y2 + " " + d.target.x + "," + d.target.y;
-                });
-                i = -MtT;
-                MTLink.attr("d", function(d){
-                    i+=MtT;
-                    return "M" + d.source.x + "," + d.source.y
-                    + "S" + x4 + "," + y2 + " " + x6 + "," + (y2 + i) 
-                    + "S" + x6 + "," + y2 + " " + d.target.x + "," + d.target.y;
-                });
-                i = -TtM;
-                TMLink.attr("d", function(d){
-                    i+=TtM;
-                    return "M" + d.source.x + "," + d.source.y
-                    + "S" + x4 + "," + y1 + " " + x6 + "," + (y1 + i) 
-                    + "S" + x5 + "," + y1 + " " + d.target.x + "," + d.target.y;
-                });
-                i = -HtT;
-                HTLink.attr("d", function(d){
-                    i+=HtT;
-                    return "M" + d.source.x + "," + d.source.y
-                    + "S" + x7 + "," + y3 + " " + x1 + "," + (y5 + i) 
-                    + "S" + x6 + "," + y3 + " " + d.target.x + "," + d.target.y;
-                });
-                i = -TtH;
-                THLink.attr("d", function(d){
-                    i+=TtH;
-                    return "M" + d.source.x + "," + d.source.y
-                    + "S" + x6 + "," + y4 + " " + x1 + "," + (y6 + i) 
-                    + "S" + x7 + "," + y4 + " " + d.target.x + "," + d.target.y;
-                });
+                if(e.alpha < 0.04){
+                     i = -MtH;
+                    MHLink.attr("d", function(d){
+                        i+=MtH;
+                        return "M" + d.source.x + "," + d.source.y
+                        + "S" + x1 + "," + y1 + " " + x2 + "," + (y1 + i) 
+                        + "S" + x2 + "," + y1 + " " + d.target.x + "," + d.target.y;
+                    });
+                    i = -HtM;
+                    HMLink.attr("d", function(d){
+                        i+=HtM;
+                        return "M" + d.source.x + "," + d.source.y
+                        + "S" + x3 + "," + y2 + " " + x3 + "," + (y2 + i) 
+                        + "S" + x1 + "," + y2 + " " + d.target.x + "," + d.target.y;
+                    });
+                    i = -MtT;
+                    MTLink.attr("d", function(d){
+                        i+=MtT;
+                        return "M" + d.source.x + "," + d.source.y
+                        + "S" + x4 + "," + y2 + " " + x6 + "," + (y2 + i) 
+                        + "S" + x6 + "," + y2 + " " + d.target.x + "," + d.target.y;
+                    });
+                    i = -TtM;
+                    TMLink.attr("d", function(d){
+                        i+=TtM;
+                        return "M" + d.source.x + "," + d.source.y
+                        + "S" + x4 + "," + y1 + " " + x6 + "," + (y1 + i) 
+                        + "S" + x5 + "," + y1 + " " + d.target.x + "," + d.target.y;
+                    });
+                    i = -HtT;
+                    HTLink.attr("d", function(d){
+                        i+=HtT;
+                        return "M" + d.source.x + "," + d.source.y
+                        + "S" + x7 + "," + y3 + " " + x1 + "," + (y5 + i) 
+                        + "S" + x6 + "," + y3 + " " + d.target.x + "," + d.target.y;
+                    });
+                    i = -TtH;
+                    THLink.attr("d", function(d){
+                        i+=TtH;
+                        return "M" + d.source.x + "," + d.source.y
+                        + "S" + x6 + "," + y4 + " " + x1 + "," + (y6 + i) 
+                        + "S" + x7 + "," + y4 + " " + d.target.x + "," + d.target.y;
+                    });
+                }
+               
                 i = 0;
                 while (++i < n) q.visit(collide(graph.nodes[i]));
                 
