@@ -10,6 +10,7 @@
 		<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
 	<![endif]-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+    <script src='extract.js' charset="utf-8"></script>
 </head>
 <body>
     <div class='container'>
@@ -24,9 +25,10 @@
             <div class='color T'></div> Tail<br/><br/>
             Each circle represents a neuron. It's size is representative of the neuron's number of synapses.<br/><br/>
             Neurons are clustered according to the region they are in (head, body or tail). <br/><br/>
-            Each grey line represents the number of total connections in the pathway from one region to another, enconded in their thickness. The direction is from the thicker side to the thinner one.<br/><br/>
-            Placing the cursor over one of them reveals the neuron's name and position in the body of the C. Elegans,
-            shown in the diagram below. Also, the pathways for that neuron are shown.<br/><br/>  
+            Neural pathways between regions are represented by grey lines. The three on top go from left to right, and the three on the bottom 
+            go from right to left.<br/><br/>
+            Placing the cursor over one of them reveals the neuron's name, it's position in the body of the C. Elegans (shown in the diagram below)
+             and the pathways for that neuron.<br/><br/>  
         </div>
         <div class='explanation'>
             A short inspection of the graph shows two important pieces of information:<br/>
@@ -61,6 +63,9 @@
                                                 $(window).scrollLeft()) + "px");
             return this;
         }
+        
+       
+        
         $('.container').center();
         // C. Elegans map
         mapW = 600, mapH = 130;
@@ -75,16 +80,12 @@
         var margin  = 50;
         var width   = parseInt(d3.select(".graph").style("width" )) - margin * 2,
             height  = parseInt(d3.select(".graph").style("height")) - margin * 2,
-            padding = 6, // separation between nodes
+            padding = 16, // separation between nodes
             maxRadius = 8;
-
-        console.log($(window).height());   // returns height of browser viewport
-        console.log($(document).height()); // returns height of HTML document
-        console.log($(window).width());   // returns width of browser viewport
-        console.log($(document).width());
         
         var regions = 3;
         
+        halfheight = height/2;
         
         var x = d3.scale.ordinal()
             .domain(d3.range(regions))
@@ -95,13 +96,7 @@
             .attr("height", height);
         
         function neurinfo(d){
-            return '<b>' + d.neuron + '</b> Neuron connections [to, from]:' + 
-            '    HEAD [' + d.sh +
-            ', ' + d.rh +
-            ']    BODY [' + d.sm +
-            ', ' + d.rm +
-            ']    TAIL [' + d.st +
-            ', ' + d.rt +']';
+            return '<b>' + d.neuron + '</b>';
         }
         
         function collide(node) {
@@ -130,71 +125,118 @@
         
         // load the data
         d3.json("data/elegans.json", function(error, graph) {
+        d3.csv('data/old/elegans_edges.csv', function(links){       
             if (error) throw error;
             
-            var HtM = 0, HtT = 0, MtH = 0, 
-                MtT = 0, TtM = 0, TtH = 0;
+            HT = [],
+            HM = [],
+            MH = [],
+            MT = [],
+            TH = [],
+            TM = [];
+
+           
+            var nodes = graph.nodes;
+            function findnode(id){
+                for(var i in nodes) if(nodes[i].neuron == id) return nodes[i];
+                return null;
+            }
+            
+            links.forEach(function(d){
+                var src = findnode(d.source), 
+                tgt = findnode(d.target);
+                if(tgt != null && src != null){
+                    if(src.region != tgt.region){
+                        eval(src.region + tgt.region + ".push({ source:src, target:tgt, weight:d.weight})");
+                    }
+                }
+            });
+
+
+            var HtM = 0.0, HtT = 0.0, MtH = 0.0, 
+                MtT = 0.0, TtM = 0.0, TtH = 0.0;
             
             graph.nodes.forEach(function(d){
-                switch(d.region){
+               switch(d.region){
                     case 'H' :
-                        HtM += d.sm;
-                        HtT += d.st;
+                        HtM += d.sm/8000;
+                        HtT += d.st/8000;
                         break;
                     case 'M' :
-                        MtH += d.sh;
-                        MtT += d.st;
+                        MtH += d.sh/8000;
+                        MtT += d.st/8000;
                         break;
                     case 'T' :
-                        TtH += d.sh;
-                        TtM += d.sm;
+                        TtH += d.sh/8000;
+                        TtM += d.sm/8000;
                         break;
                 }
             });
-            
-            function makechord(d, xs, ys, xe, ye){
-                if(d>0) d = Math.max(d, 1);
-                return svg.append("path")
-                    .attr("d", "M" + (xs) + "," + (ys + d/2)
-                        + "L" + (xs) + "," + (ys - d/2)
-                        + "L" + (xe) + "," + (ye - d/4)
-                        + "L" + (xe) + "," + (ye + d/4)
-                        )
-                    .style("fill", '#888');
-            }
-            
-            LHtM = makechord(HtM/10, x(0)+310, height/2 - 40, x(1)-50, height/2 - 40);
-            LMtH = makechord(MtH/10, x(1)-50, height/2 + 40, x(0)+310, height/2 + 40);
-            LMtT = makechord(MtT/10, x(1)+150, height/2 - 40, x(2)-200, height/2 - 40);
-            LTtM = makechord(TtM/10, x(2)-200, height/2 + 40, x(1)+150, height/2 + 40);
-            
-            function makecurve(d, xs,ys, xm,ym, xe,ye){
-                if(d>0) d = Math.max(d, 1);
-                if(d>0) d = d + 4;
-                var delta = (xs < xe) ? 20 : -20 ; 
-                return svg.append("path")
-                    .attr("d", "M" + (xs) + "," + (ys - d/2)
-                        + "L" + (xs) + "," + (ys - d/2)
-                        + "S" + (xm) + "," + (ym - d/3) + " " + (xe) + "," + (ye)
-                        + "L" + (xe) + "," + (ye)
-                        + "S" + (xm+delta) + "," + (ym + d/3) + " " + (xs) + "," + (ys + d/2)
-                    )
-                    .style("fill", '#888');
-            }
-            
-            LHtT = makecurve(HtT/10, (x(0)+310),(height/2 - 120) , x(1),(height/2 - 300), (x(2)-200), (height/2 - 80));
-            LTtH = makecurve(TtH/10, (x(2)-200),(height/2 + 80) , x(1),(height/2 + 300), (x(0)+310), (height/2 + 80));
-            
+     
             var force = d3.layout.force()
                 .nodes(graph.nodes)
                 .gravity(0.1)
                 .size([width, height])
                 .start();
 
+            var MHLink = svg.selectAll(".link")
+                .data(MH)
+                .enter().append("path")
+                .attr("class", ".link")
+                .style("stroke-width", 0.25)
+                .style("stroke", "#999")
+                .style("fill", "none")
+                .style("opacity", 0.5);
+            
+            var HMLink = svg.selectAll(".link")
+                .data(HM)
+                .enter().append("path")
+                .attr("class", ".link")
+                .style("stroke-width", 0.25)
+                .style("stroke", "#999")
+                .style("fill", "none")
+                .style("opacity", 0.5);
+            
+             var MTLink = svg.selectAll(".link")
+                .data(MT)
+                .enter().append("path")
+                .attr("class", ".link")
+                .style("stroke-width", 0.25)
+                .style("stroke", "#999")
+                .style("fill", "none")
+                .style("opacity", 0.5);
+            
+             var TMLink = svg.selectAll(".link")
+                .data(MT)
+                .enter().append("path")
+                .attr("class", ".link")
+                .style("stroke-width", 0.25)
+                .style("stroke", "#999")
+                .style("fill", "none")
+                .style("opacity", 0.5);
+                
+             var HTLink = svg.selectAll(".link")
+                .data(HT)
+                .enter().append("path")
+                .attr("class", ".link")
+                .style("stroke-width", 0.25)
+                .style("stroke", "#999")
+                .style("fill", "none")
+                .style("opacity", 0.5);
+            
+             var THLink = svg.selectAll(".link")
+                .data(TH)
+                .enter().append("path")
+                .attr("class", ".link")
+                .style("stroke-width", 0.25)
+                .style("stroke", "#999")
+                .style("fill", "none")
+                .style("opacity", 0.2);
+            // ---------------------------------------------------
             var node = svg.selectAll(".node")
                 .data(graph.nodes)
                 .enter().append("circle")
-                .attr("class", function(d) { return d.region; })
+                .attr("class", function(d) { return "node " + d.region; })
                 .attr("cx", function(d){
                     switch(d.region){
                         case 'H' : return x(0);
@@ -202,81 +244,127 @@
                         case 'T' : return x(2);
                     };
                 })
-                .attr("cy", height/2)
+                .attr("cy", halfheight)
                 .attr("r", function(d) { 
                     d.radius = 4 + d.synapses/20;
-                    return d.radius; })
-                .style("opacity",0.5)
+                    return d.radius; 
+                })
                 .call(force.drag)
                 .on("mouseover", function(d){
-                    var neuron = d.neuron;
-                    d3.select(this).style("opacity",1)
+                    neuron = d.neuron;
                     drawMap.append("circle")
                         .attr("class", d.region)
                         .attr("cx", parseFloat(d.position*mapW))
                         .attr("cy", parseInt(0.5*mapH))
                         .attr("r", 4 + d.synapses/25);
-                    
-                    LHtM.remove();
-                    LHtT.remove();
-                    LMtH.remove();
-                    LMtT.remove();
-                    LTtM.remove();
-                    LTtH.remove();
-                    switch(d.region){
-                        case 'H':
-                            LHtM = makechord(d.sm/10, x(0)+310, height/2 - 40, x(1)-50, height/2 - 40);
-                            LHtT = makecurve(d.st/10, (x(0)+310),(height/2 - 120) , x(1),(height/2 - 300), (x(2)-200), (height/2 - 80));
-                            LMtH = makechord(d.rm/10, x(1)-50, height/2 + 40, x(0)+310, height/2 + 40);
-                            LTtH = makecurve(d.rt/10, (x(2)-200),(height/2 + 80) , x(1),(height/2 + 300), (x(0)+310), (height/2 + 80));
-                            break;
-                        case 'M':
-                            LHtM = makechord(d.rh/10, x(0)+310, height/2 - 40, x(1)-50, height/2 - 40);
-                            LMtH = makechord(d.sh/10, x(1)-50, height/2 + 40, x(0)+310, height/2 + 40);
-                            LMtT = makechord(d.st/10, x(1)+150, height/2 - 40, x(2)-200, height/2 - 40);
-                            LTtM = makechord(d.rt/10, x(2)-200, height/2 + 40, x(1)+150, height/2 + 40);
-                            break;
-                        case 'T':
-                            LMtT = makechord(d.rm/10, x(1)+150, height/2 - 40, x(2)-200, height/2 - 40);
-                            LTtM = makechord(d.sm/10, x(2)-200, height/2 + 40, x(1)+150, height/2 + 40);
-                            LHtT = makecurve(d.rh/10, (x(0)+310),(height/2 - 120) , x(1),(height/2 - 300), (x(2)-200), (height/2 - 80));
-                            LTtH = makecurve(d.sh/10, (x(2)-200),(height/2 + 80) , x(1),(height/2 + 300), (x(0)+310), (height/2 + 80));
-                            break;
-                    }
-                    
-                    
                     $('.neuron').html(neurinfo(d));
+                    blocked = [];
+                    switch(d.region){
+                        case 'H' :
+                            HTLink.style('opacity', function(s){
+                                if(s.source.neuron != d.neuron)
+                                    return 0;
+                                return 0.8;
+                            });
+                            HMLink.style('opacity', function(s){
+                                if(s.source.neuron != d.neuron)
+                                    return 0;
+                                return 0.8;
+                            });
+                            THLink.style('opacity',  function(s){
+                                if(s.source.neuron != d.neuron)
+                                    return 0;
+                                return 0.8;
+                            });
+                            MHLink.style('opacity',  function(s){
+                                if(s.source.neuron != d.neuron)
+                                    return 0;
+                                return 0.8;
+                            });
+                            TMLink.style('opacity', 0);
+                            MTLink.style('opacity', 0);
+                            break;
+                        case 'M' :
+                            MHLink.style('opacity', function(s){
+                                if(s.source.neuron != d.neuron)
+                                    return 0;
+                                return 0.8;
+                            });
+                            MTLink.style('opacity', function(s){
+                                if(s.source.neuron != d.neuron)
+                                    return 0;
+                                return 0.8;
+                            });
+                            THLink.style('opacity', 0);
+                            HTLink.style('opacity', 0);
+                            TMLink.style('opacity',  function(s){
+                                if(s.source.neuron != d.neuron)
+                                    return 0;
+                                return 0.8;
+                            });
+                            HMLink.style('opacity',  function(s){
+                                if(s.source.neuron != d.neuron)
+                                    return 0;
+                                return 0.8;
+                            });
+                        break;
+                        case 'T' :
+                            THLink.style('opacity', function(s){
+                                if(s.source.neuron != d.neuron)
+                                    return 0;
+                                return 0.8;
+                            });
+                            TMLink.style('opacity', function(s){
+                                if(s.source.neuron != d.neuron)
+                                    return 0;
+                                return 0.8;
+                            });
+                            MHLink.style('opacity', 0);
+                            HTLink.style('opacity',  function(s){
+                                if(s.source.neuron != d.neuron)
+                                    return 0;
+                                return 0.8;
+                            });
+                            MTLink.style('opacity',  function(s){
+                                if(s.source.neuron != d.neuron)
+                                    return 0;
+                                return 0.8;
+                            });
+                            HMLink.style('opacity', 0);
+                        break;
+                    }
+                  
+                    
                 }).on("mouseout", function(d){
-                    d3.select(this).style("opacity",0.5);
                     drawMap.selectAll("circle")
                         .transition()
                         .style("opacity",0)
                         .remove();
                     $('.neuron').html('');
-                    LHtM.transition().style('opacity', 0).remove();
-                    LHtT.transition().style('opacity', 0).remove();
-                    LMtH.transition().style('opacity', 0).remove();
-                    LMtT.transition().style('opacity', 0).remove();
-                    LTtM.transition().style('opacity', 0).remove();
-                    LTtH.transition().style('opacity', 0).remove();
-                    LHtM = makechord(HtM/10, x(0)+310, height/2 - 40, x(1)-50, height/2 - 40);
-                    LMtH = makechord(MtH/10, x(1)-50, height/2 + 40, x(0)+310, height/2 + 40);
-                    LMtT = makechord(MtT/10, x(1)+150, height/2 - 40, x(2)-200, height/2 - 40);
-                    LTtM = makechord(TtM/10, x(2)-200, height/2 + 40, x(1)+150, height/2 + 40);
-                    LHtT = makecurve(HtT/10, (x(0)+310),(height/2 - 120) , x(1),(height/2 - 300), (x(2)-200), (height/2 - 80));
-                    LTtH = makecurve(TtH/10, (x(2)-200),(height/2 + 80) , x(1),(height/2 + 300), (x(0)+310), (height/2 + 80));
+                    HTLink.style('opacity', 0.5);
+                    HMLink.style('opacity', 0.5);
+                    THLink.style('opacity', 0.5);
+                    MHLink.style('opacity', 0.5);
+                    TMLink.style('opacity', 0.5);
+                    MTLink.style('opacity', 0.5);
                 });
 
             node.append("title")
                 .text(function(d) { return d.neuron; });
             
+            x1 = x(1);          y1 = (halfheight + 40);
+            x2 = (x(1)-80);     y2 = (halfheight - 40);
+            x3 = (x(1)-100);    y3 = (halfheight - 180);
+            x4 = (x(1)+100);    y4 = (halfheight + 180);
+            x5 = (x(1)+200);    y5 = (halfheight - 170);
+            x6 = (x(1)+180);    y6 = (halfheight + 170);
+            x7 = (x(1)-180);
             force.on("tick", function(e) {
                 var q = d3.geom.quadtree(graph.nodes),
                     i = 0,
                     n = graph.nodes.length;
                 
                 var k = .1 * e.alpha;
-                
                 graph.nodes.forEach(function(o, i) {
                     var dx;
                     switch(o.region){
@@ -284,10 +372,52 @@
                         case 'M' : dx = x(1); break;
                         case 'T' : dx = x(2); break;
                     };
-                    o.y += (height/2 - o.y) * k;
+                    o.y += (halfheight - o.y) * k;
                     o.x += (dx - o.x) * k;
                 });
-                
+                i = -MtH;
+                MHLink.attr("d", function(d){
+                    i+=MtH;
+                    return "M" + d.source.x + "," + d.source.y
+                    + "S" + x1 + "," + y1 + " " + x2 + "," + (y1 + i) 
+                    + "S" + x2 + "," + y1 + " " + d.target.x + "," + d.target.y;
+                });
+                i = -HtM;
+                HMLink.attr("d", function(d){
+                    i+=HtM;
+                    return "M" + d.source.x + "," + d.source.y
+                    + "S" + x3 + "," + y2 + " " + x3 + "," + (y2 + i) 
+                    + "S" + x1 + "," + y2 + " " + d.target.x + "," + d.target.y;
+                });
+                i = -MtT;
+                MTLink.attr("d", function(d){
+                    i+=MtT;
+                    return "M" + d.source.x + "," + d.source.y
+                    + "S" + x4 + "," + y2 + " " + x6 + "," + (y2 + i) 
+                    + "S" + x6 + "," + y2 + " " + d.target.x + "," + d.target.y;
+                });
+                i = -TtM;
+                TMLink.attr("d", function(d){
+                    i+=TtM;
+                    return "M" + d.source.x + "," + d.source.y
+                    + "S" + x4 + "," + y1 + " " + x6 + "," + (y1 + i) 
+                    + "S" + x5 + "," + y1 + " " + d.target.x + "," + d.target.y;
+                });
+                i = -HtT;
+                HTLink.attr("d", function(d){
+                    i+=HtT;
+                    return "M" + d.source.x + "," + d.source.y
+                    + "S" + x7 + "," + y3 + " " + x1 + "," + (y5 + i) 
+                    + "S" + x6 + "," + y3 + " " + d.target.x + "," + d.target.y;
+                });
+                i = -TtH;
+                THLink.attr("d", function(d){
+                    i+=TtH;
+                    return "M" + d.source.x + "," + d.source.y
+                    + "S" + x6 + "," + y4 + " " + x1 + "," + (y6 + i) 
+                    + "S" + x7 + "," + y4 + " " + d.target.x + "," + d.target.y;
+                });
+                i = 0;
                 while (++i < n) q.visit(collide(graph.nodes[i]));
                 
                 node.attr("cx", function(d) { return d.x; })
@@ -295,6 +425,7 @@
            
             });
         });
+        }); 
     </script>
 </body>
 </html>
