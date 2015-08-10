@@ -30,15 +30,13 @@ svg {
     height:100%;
 }
 
-.node {
-    stroke: #4fa;
-    fill:#a48;
-    stroke-width: 1px;
-}
-
-.H{ fill:#a48; }
-.M{ fill:#098; }
-.T{ fill:#da4; }
+.H{ fill:#D5A2C4;}
+.H:hover{ fill:#a48; }
+.M{ fill:#80CCC4; }
+.M:hover{ fill:#098; }
+.T{ fill:#EED5A2; }
+.T:hover{ fill:#da4; }
+.node{ opacity: 0.85; }
 
 .color.H{ background:#a48; }
 .color.M{ background:#098; }
@@ -46,7 +44,9 @@ svg {
 
 .link {
     fill:none;
-    stroke:#555;
+    stroke:#999;
+    stroke-width:0.25;
+    opacity: 0.5;
 }
 
 title.i {
